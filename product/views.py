@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, redirect
 from django.contrib import messages
-from product.models import Product, Subcategory
+from product.models import Product, Subcategory, Order
 
 
 def index(request):
@@ -41,8 +41,6 @@ def add_product_to_session(request, p_id, quantity):
 
 
 def cart(request):
-
-
     if request.method == 'POST':
         next_page = request.POST.get('next', '/')
         p_id = request.POST.get('product_id')
@@ -71,7 +69,11 @@ def cart(request):
 
             subtotal = 0
             for product in all_products:
-                subtotal += product.get('price')
+                subtotal = subtotal + product.get('price')
+
+            if 'subtotal' not in request.session:
+                request.session['subtotal'] = []
+            request.session['subtotal'] = subtotal
 
             return render(request, 'product/cart.html', {'products': all_products, 'subtotal': subtotal})
 
@@ -91,3 +93,25 @@ def remove_product_from_session(request):
         messages.info(request, 'Product removed from cart!')
 
         return redirect('/cart')
+
+
+def checkout(request):
+    return render(request, 'product/checkout.html')
+
+
+
+def complete_order(request):
+    if request.method == 'POST':
+        request.session.modified = True
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        subtotal = request.session['subtotal']
+
+        order = Order(name=name, email=email, subtotal=subtotal)
+        order.save()
+
+        request.session.flush()
+
+
+
+    return redirect('/cart')
