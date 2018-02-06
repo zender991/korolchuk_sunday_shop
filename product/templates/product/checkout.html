@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+
+    <form action="{% url 'product:cart' %}" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+
+        <p>Name</p>
+        <input type="text" name="name">
+        <p>Email</p>
+        <input type="text" name="email">
+
+        <button type="submit">Add to cart!</button>
+    </form>
+
+
+
+{% endblock %}

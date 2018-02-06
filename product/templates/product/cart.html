@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Cart{% endblock %}
+
+{% block content %}
+    {% for product in products %}
+
+        <p>Title - {{ product.title }}</p>
+        <p>Price - {{ product.price }}</p>
+        <p>Quantity - {{ product.quantity }}</p>
+        <form action="{% url 'product:remove-product' %}" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        <button type="submit">Remove</button>
+        </form>
+        <hr/>
+
+    {% endfor %}
+
+    <h3>Subtotal - {{ subtotal }}</h3>
+
+
+{% endblock %}
