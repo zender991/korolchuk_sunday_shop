@@ -4,9 +4,12 @@ from product.models import Product, Subcategory, Order
 from django import forms
 
 
-class FormValidation(forms.Form):
+class CheckoutFormValidation(forms.Form):
     name = forms.CharField()
     email = forms.EmailField()
+
+
+class AddProductFormValidation(forms.Form):
     p_id = forms.IntegerField()
     quantity = forms.IntegerField()
     next_page = forms.CharField()
@@ -51,7 +54,7 @@ def add_product_to_session(request, p_id, quantity):
 
 def cart(request):
     if request.method == 'POST':
-        form = FormValidation(request.POST)
+        form = AddProductFormValidation(request.POST)
         if not form.is_valid():
             received_request = request.POST
             next_page = received_request.get('next', '/')
@@ -117,7 +120,7 @@ def checkout(request):
 
 def complete_order(request):
     if request.method == 'POST':
-        form = FormValidation(request.POST, request.FILES)
+        form = CheckoutFormValidation(request.POST, request.FILES)
         if form.is_valid():
 
             request.session.modified = True
@@ -131,8 +134,9 @@ def complete_order(request):
 
             del request.session['products']
             del request.session['subtotal']
+            messages.info(request, 'Order created successfully')
         else:
             messages.info(request, 'Wrong input parameters')
             return redirect('/checkout')
 
-    return redirect('/cart')
+    return redirect('/')

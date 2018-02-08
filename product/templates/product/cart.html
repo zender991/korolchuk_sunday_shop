@@ -16,7 +16,11 @@
 
     {% endfor %}
 
-    <h3>Subtotal - {{ subtotal }}</h3>
+    {% if  subtotal%}
+        <h3>Subtotal - {{ subtotal }}</h3>
+    {% else %}
+        <h4>Your cart is empty</h4>
+    {% endif %}
 
     <a href=" {% url 'product:checkout' %}" >Proceed to Checkout</a>
 {% endblock %}
