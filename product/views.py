@@ -1,6 +1,15 @@
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, redirect
 from django.contrib import messages
 from product.models import Product, Subcategory, Order
+from django import forms
+
+
+class FormValidation(forms.Form):
+    name = forms.CharField()
+    email = forms.EmailField()
+    p_id = forms.IntegerField()
+    quantity = forms.IntegerField()
+    next_page = forms.CharField()
 
 
 def index(request):
@@ -42,11 +51,18 @@ def add_product_to_session(request, p_id, quantity):
 
 def cart(request):
     if request.method == 'POST':
-        next_page = request.POST.get('next', '/')
-        p_id = request.POST.get('product_id')
-        quantity = request.POST.get('quantity')
-        add_product_to_session(request, p_id, quantity)
-        return HttpResponseRedirect(next_page)
+        form = FormValidation(request.POST)
+        if not form.is_valid():
+            received_request = request.POST
+            next_page = received_request.get('next', '/')
+            p_id = received_request.get('product_id')
+            quantity = received_request.get('quantity')
+            add_product_to_session(request, p_id, quantity)
+            return HttpResponseRedirect(next_page)
+        else:
+            messages.info(request, 'Wrong input parameters')
+            return redirect('/')
+
     else:
         if request.session.get('products'):
             all_products = []
@@ -69,7 +85,7 @@ def cart(request):
 
             subtotal = 0
             for product in all_products:
-                subtotal = subtotal + product.get('price')
+                subtotal = subtotal + (product.get('price') * int(product.get('quantity')))
 
             if 'subtotal' not in request.session:
                 request.session['subtotal'] = []
@@ -99,19 +115,24 @@ def checkout(request):
     return render(request, 'product/checkout.html')
 
 
-
 def complete_order(request):
     if request.method == 'POST':
-        request.session.modified = True
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        subtotal = request.session['subtotal']
+        form = FormValidation(request.POST, request.FILES)
+        if form.is_valid():
 
-        order = Order(name=name, email=email, subtotal=subtotal)
-        order.save()
+            request.session.modified = True
+            received_request = request.POST
+            name = received_request.get('name')
+            email = received_request.get('email')
+            subtotal = request.session['subtotal']
 
-        request.session.flush()
+            order = Order(name=name, email=email, subtotal=subtotal)
+            order.save()
 
-
+            del request.session['products']
+            del request.session['subtotal']
+        else:
+            messages.info(request, 'Wrong input parameters')
+            return redirect('/checkout')
 
     return redirect('/cart')
